@@ -7,6 +7,7 @@ import (
     "log"
     "math/rand/v2"
     "time"
+    "sync"
 )
 
 const length = 80
@@ -49,11 +50,18 @@ func randomInit(field *liveField){
 }
 
 func calculateNewGender(oldGender *liveField, newGender *liveField){
+  var wg sync.WaitGroup
+
   for i, v := range newGender {
     for j,_ := range v {
-      newGender[i][j] = newValueForField(oldGender, i, j)
+      wg.Add(1)
+      go func(i int, j int) {
+        newGender[i][j] = newValueForField(oldGender, i, j)
+        defer wg.Done()
+      }(i, j)
     }
   }
+  wg.Wait()
 }
 
 func newValueForField(oldGender *liveField, i int, j int) int {
